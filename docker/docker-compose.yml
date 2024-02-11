@@ -1,3 +1,6 @@
+version: '3.7'
+name: messy-stack
+
 networks:
   internal:
     internal: true
