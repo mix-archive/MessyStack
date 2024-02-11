@@ -1,0 +1,26 @@
+networks:
+  internal:
+    internal: true
+
+services:
+  edtunnel:
+    build:
+      context: ..
+      dockerfile: ./docker/Dockerfile
+    networks:
+      - internal
+    restart: unless-stopped
+
+  v2ray:
+    image: teddysun/v2ray:latest
+    networks:
+      - default
+      - internal
+    ports:
+      - '10086:10086'
+    volumes:
+      - './v2ray-config.json:/etc/v2ray/config.json:ro'
+    restart: unless-stopped
+    depends_on:
+      edtunnel:
+        condition: service_healthy

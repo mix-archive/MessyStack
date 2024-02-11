@@ -5,7 +5,7 @@
   "scripts": {
     "deploy": "wrangler deploy",
     "dev": "wrangler dev",
-    "start": "wrangler dev"
+    "start": "wrangler dev --ip '0.0.0.0' --port 8787"
   },
   "devDependencies": {
     "wrangler": "^3.0.0"
