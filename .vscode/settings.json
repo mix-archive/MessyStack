@@ -1,6 +1,4 @@
 {
-    "editor.formatOnSave": true,
-    "cSpell.words": [
-        "VLESS"
-    ]
+  "editor.formatOnSave": true,
+  "cSpell.words": ["VLESS"]
 }
