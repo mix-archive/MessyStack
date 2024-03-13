@@ -20,7 +20,7 @@ services:
       - default
       - internal
     ports:
-      - '10086:10086'
+      - '${PORT}:10086'
     volumes:
       - './v2ray-config.json:/etc/v2ray/config.json:ro'
     restart: unless-stopped
