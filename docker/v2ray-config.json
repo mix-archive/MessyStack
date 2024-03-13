@@ -22,8 +22,7 @@
       "tag": "internal",
       "protocol": "freedom",
       "settings": {
-        "domainStrategy": "AsIs",
-        "redirect": "edtunnel:0"
+        "domainStrategy": "AsIs"
       }
     }
   ]
