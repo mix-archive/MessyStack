@@ -1,6 +1,6 @@
 # MessyStack
 
-Deployment stack for a vulnerable proxy server setup. (DubheCTF 2024)
+Deployment stack for a vulnerable proxy server setup. (DubheCTF 2024 "authenticated mess & unauthenticated less" challenge)
 
 ## 题面
 
@@ -8,7 +8,6 @@ Deployment stack for a vulnerable proxy server setup. (DubheCTF 2024)
 
 ### 题目描述
 
-> authenticated mess & unauthenticated less
 > How can things go wrong when using a proxy server?
 
 <details>
@@ -26,7 +25,7 @@ Deployment stack for a vulnerable proxy server setup. (DubheCTF 2024)
 
 ### 分析流量
 
-使用 `Wireshark` 来打开 `pcapng` 文件，我们可以看到有一个明文的 HTTP 请求：
+使用 Wireshark 来打开文件，我们可以看到有一个明文的 HTTP 请求：
 
 ```http
 GET /raw/sw2TFBLK HTTP/1.1
@@ -74,7 +73,7 @@ Accept: */*
 }
 ```
 
-可以看到，这是一个 `V2Ray` 的配置文件。此时我们可以猜测，流量文件后半部分的内容可能是关于 `VMess` 的流量。
+可以看到，这是一个 V2Ray 的配置文件。此时我们可以猜测，流量文件后半部分的内容可能是 `VMess` 协议的流量。
 
 ### 解密流量
 
@@ -122,12 +121,11 @@ print(body)
 在比赛中，重放流量应当是更加简单的方法。
 
 > [!TIP]
-> 为什么重放流量行得通？
-> 因为 VMessAEAD 并没有类似于 VMessMD5 那样的[请求头时间戳猜测机制](https://www.v2fly.org/developer/protocols/vmess.html#%E5%AE%A2%E6%88%B7%E7%AB%AF%E8%AF%B7%E6%B1%82)，只有检查根据 UUID 最终解密后的结果中时间戳是否在合理范围内的机制。所以重放流量是行得通的，[只需要 Patch 掉对时间范围的检查即可](https://github.com/v2fly/v2ray-core/blob/49b5068606f5c764dcdf65854565b1b9c8abb292/proxy/vmess/aead/authid.go#L108-L110)。
+> 因为 VMessAEAD 并没有类似于 VMessMD5 那样的[请求头时间戳爆破机制](https://www.v2fly.org/developer/protocols/vmess.html#%E5%AE%A2%E6%88%B7%E7%AB%AF%E8%AF%B7%E6%B1%82)，只有检查根据 UUID 最终解密后的结果中时间戳是否在合理范围内的机制。所以重放流量是行得通的，[只需要 Patch 掉对时间范围的检查即可](https://github.com/v2fly/v2ray-core/blob/49b5068606f5c764dcdf65854565b1b9c8abb292/proxy/vmess/aead/authid.go#L108-L110)。
 
 流量解密后，我们能得到一个图片的链接：
 
-<http://p.sda1.dev/16/11c111ee40a928d5d751dd5869414093/__p0.png>
+![玩BA玩的](http://p.sda1.dev/16/11c111ee40a928d5d751dd5869414093/__p0.png)
 
 ### 图片解压
 
@@ -172,12 +170,14 @@ DECIMAL       HEXADECIMAL     DESCRIPTION
 
 EdTunnel 部分是来自 <https://github.com/3Kmfi6HP/EDtunnel> 的代码，只对 UUID 和默认路由进行了简单的修改。
 
-可以看到，EdTunnel 是通过 Wrangler 本地的开发模式部署的，查看 Wrangler 的 GitHub，可以发现 [CVE-2023-7080](https://github.com/cloudflare/workers-sdk/security/advisories/GHSA-f8mp-x433-5wpf)，这个漏洞描述了 Wrangler 的 Inspector 端口是对所有接口监听的，所以攻击者可以在临近网络上访问到 Inspector 端口从而实现 Worker 内的远程端口执行。
+可以看到，EdTunnel 是通过 Wrangler 本地的开发模式部署的，查看 Wrangler 的 GitHub，可以发现 [CVE-2023-7080](https://github.com/cloudflare/workers-sdk/security/advisories/GHSA-f8mp-x433-5wpf)，这个漏洞描述了 Wrangler 的 Inspector 端口是对所有接口监听的，所以攻击者可以在临近网络上访问到 Inspector 端口从而实现 Worker 沙盒内的远程代码执行。
 
 虽然题目版本的 Wrangler 已经修复了这个漏洞，但是由于这个代码的作用是使用 Cloudflare Worker 的 API 实现一个 VLESS over WebSocket 的代理，所以我们可以通过这个代理来 SSRF 到部署 EdTunnel 的容器，从而实现连接到 Inspector 的端口。
 
-具体建立连接将 V8 Inspector 端口暴露到本地的配置文件可以参考 [exp-config.json](./docker/exp-config.json)
+具体建立连接将 V8 Inspector 端口暴露到本地的配置文件可以参考 [exp-config.json](./docker/exp-config.json)，使用 `v2ray run -c exp-config.json -format jsonv5` 命令来运行。（因为 V4 版本的 V2Ray 对传输层流量多层代理支持不佳）
 
-将端口暴露到本地后，我们可以在 Chrome 的 DevTools 中连接到这个端口。在 DevTools 的 Memory Snapshot 中，我们可以进行打出 Heap Snapshot，然后在其中搜索关键字即可找到 Flag 变量。
+将端口暴露到本地后，我们可以在 Chrome 的 DevTools 中直接连接到这个端口（左上会出现 Node.js 的标识）。在 DevTools 的 Memory Snapshot 中，我们可以打出 Heap Snapshot，然后在其中搜索关键字即可找到 Flag 变量。
 
 ![图片](https://github.com/mix-archive/MessyStack/assets/32300164/511a5fd9-f10b-451f-9d71-bde059429755)
+
+> What a messy protocol & lessy debugger!
