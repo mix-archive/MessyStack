@@ -89,7 +89,37 @@ Accept: */*
 > 关于协议的部分实现，可以参考 [extra-VMessAEADdoc.zip](https://github.com/v2fly/v2ray-core/releases/download/v4.24.1/extra-VMessAEADdoc.zip)
 > 但是协议的最终实现还是需要参考 v2ray-core 的源码，因为有些地方的实现和文档中的描述不一致。
 
-在这里我[写了一个库](https://github.com/mnixry/vmess-aead-python)专门用来解析 VMessAEAD 的流量。在比赛中，重放流量应当是更加简单的方法。
+在这里我[写了一个库](https://github.com/mnixry/vmess-aead-python)专门用来解析 VMessAEAD 的流量。
+
+```python
+import uuid
+
+from vmess_aead.encoding import VMessBodyEncoder
+from vmess_aead.headers.request import VMessAEADRequestPacketHeader
+from vmess_aead.utils.reader import BytesReader
+
+data = "a49502ee07ffdd20f11597e961f7768b41be7bc32030107fc81f235f72ff1b294d074ade94281242412b4c19123b15250ac3d5ad9524df9acd0ee5f6dcca7b0c2849b2f4df20190dd084c01c3f6e2834dd87cb8e97fa178b2ec454755f89d9b735ae6dab9c7989cf4154f7eae53774d9d6cdb55d0a76fdaf21e08bae26e49cbb3c56d11a3fe540454bfbae06305460301caca4109df3335b0c3646b6e2d856a927f9298b87da3a7cf3cffcca6c27259fc055faa9f3155cc95f698bb37436008783b6cd03d38a8e109f78a48c860b600fcbe825cd6c6a5be2c95fce121df574c70fe62e4f24e28de5983db6c3c0192d72ec785b6d58c4b8301c4f70eab683"
+data = bytes.fromhex(data)
+
+reader = BytesReader(data)
+user_id = uuid.UUID("f3a5cae3-6bd2-40d1-b13b-2cc3d87af2c7")
+
+
+header = VMessAEADRequestPacketHeader.from_packet(reader, user_id)
+print(header)
+
+encoder = VMessBodyEncoder(
+    header.payload.body_key,
+    header.payload.body_iv,
+    header.payload.options,
+    header.payload.security,
+    header.payload.command,
+)
+body = encoder.decode_once(reader)
+print(body)
+```
+
+在比赛中，重放流量应当是更加简单的方法。
 
 > [!TIP]
 > 为什么重放流量行得通？
