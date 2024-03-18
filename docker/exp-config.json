@@ -1,0 +1,88 @@
+{
+  "$schema": "https://github.com/EHfive/v2ray-jsonschema/raw/main/v5-config.schema.json",
+  "log": {
+    "access": {
+      "level": "Info",
+      "type": "Console"
+    },
+    "error": {
+      "level": "Debug",
+      "type": "Console"
+    }
+  },
+  "inbounds": [
+    {
+      "listen": "127.0.0.1",
+      "port": 1080,
+      "protocol": "socks",
+      "tag": "in"
+    },
+    {
+      "listen": "127.0.0.1",
+      "port": "8787",
+      "protocol": "dokodemo-door",
+      "settings": {
+        "address": "127.0.0.1",
+        "port": 8787,
+        "networks": ["TCP"]
+      },
+      "tag": "wrangler"
+    },
+    {
+      "listen": "127.0.0.1",
+      "port": "9229",
+      "protocol": "dokodemo-door",
+      "settings": {
+        "address": "127.0.0.1",
+        "port": 9229,
+        "networks": ["TCP"]
+      },
+      "tag": "inspector"
+    }
+  ],
+  "outbounds": [
+    {
+      "protocol": "vmess",
+      "settings": {
+        "address": "REDACTED",
+        "port": 10086,
+        "uuid": "f3a5cae3-6bd2-40d1-b13b-2cc3d87af2c7"
+      },
+      "tag": "outer"
+    },
+    {
+      "protocol": "vless",
+      "settings": {
+        "address": "edtunnel",
+        "port": 8787,
+        "uuid": "5e5e7b9a-a251-441b-a81b-9d5b8a8f9019"
+      },
+      "proxySettings": {
+        "tag": "outer",
+        "transportLayer": true
+      },
+      "streamSettings": {
+        "transport": "ws",
+        "transportSettings": {
+          "path": "/",
+          "earlyDataHeaderName": "sec-websocket-protocol",
+          "maxEarlyData": 2048
+        }
+      },
+      "tag": "inner"
+    }
+  ],
+  "router": {
+    "domainStrategy": "AsIs",
+    "rule": [
+      {
+        "tag": "inner",
+        "inboundTag": ["wrangler", "inspector"]
+      },
+      {
+        "tag": "outer",
+        "inboundTag": ["in"]
+      }
+    ]
+  }
+}
